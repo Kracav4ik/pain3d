@@ -15,20 +15,31 @@ private:
 
 protected:
     virtual void paintGL() override {
+        glClearColor(0, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         program->bind();
 
-        GLfloat scale[] = {100.f/width(), 100.f/height()};
+        GLfloat scale[] = {.5f, .5f, .5f};
 
         GLfloat vertices[] = {
-                -1,-1,
-                -1,1,
-                1,-1,
-                1,1
+                -1, -1,  1,
+                -1,  1,  1,
+                 1, -1,  1,
+                 1,  1,  1,
+                -1, -1, -1,
+                -1,  1, -1,
+                 1, -1, -1,
+                 1,  1, -1
         };
 
         GLubyte indices[] = {
-                0,1,2,  1,2,3
+                1,0,2,  1,3,2,
+                0,1,5,  0,4,5,
+                0,2,6,  0,4,6,
+                1,2,6,  0,7,6,
+                4,5,7,  4,6,7,
+                4,5,7,  4,6,7,
+                1,5,7,  1,3,7,
         };
 
         GLfloat colors[] = {
@@ -38,16 +49,14 @@ protected:
                 1,1,0,1
         };
 
-        glVertexAttribPointer(pos_attr,2,GL_FLOAT,GL_FALSE,0,vertices);
-        glVertexAttribPointer(col_attr,4,GL_FLOAT,GL_FALSE,0,colors);
-        glUniform2f(scale_attr,scale[0], scale[1]);
+        glVertexAttribPointer(pos_attr,3,GL_FLOAT,GL_FALSE,0,vertices);
+        glUniform4fv(col_attr, 1, colors);
+        glUniform3fv(scale_attr, 1, scale);
 
         glEnableVertexAttribArray(pos_attr);
-        glEnableVertexAttribArray(col_attr);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+        glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_BYTE, indices);
 
-        glDisableVertexAttribArray(col_attr);
         glDisableVertexAttribArray(pos_attr);
 
 
@@ -62,13 +71,13 @@ protected:
 
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
-attribute vec2 position;
-uniform vec2 scale;
-attribute vec4 color;
+attribute vec3 position;
+uniform vec3 scale;
+uniform vec4 color;
 varying vec4 v_color;
 
 void main(){
-    gl_Position = vec4(position*scale,0.0,1.0);
+    gl_Position = vec4(position*scale, 1.0);
     v_color = color;
 }
 )");
@@ -81,7 +90,7 @@ void main(){
 )");
         program->link();
         pos_attr = program->attributeLocation("position");
-        col_attr = program->attributeLocation("color");
+        col_attr = program->uniformLocation("color");
         scale_attr = program->uniformLocation("scale");
 
     }

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
+#include <QTimer>
 
 class GLOutput : public QOpenGLWidget, private QOpenGLFunctions {
 Q_OBJECT
@@ -11,7 +12,8 @@ private:
     QOpenGLShaderProgram* program;
     GLuint pos_attr;
     GLuint col_attr;
-    GLuint scale_attr;
+    GLuint m_attr;
+    QTimer timer;
 
 protected:
     virtual void paintGL() override {
@@ -38,7 +40,6 @@ protected:
                 0,2,6,  0,4,6,
                 1,2,6,  0,7,6,
                 4,5,7,  4,6,7,
-                4,5,7,  4,6,7,
                 1,5,7,  1,3,7,
         };
 
@@ -51,7 +52,15 @@ protected:
 
         glVertexAttribPointer(pos_attr,3,GL_FLOAT,GL_FALSE,0,vertices);
         glUniform4fv(col_attr, 1, colors);
-        glUniform3fv(scale_attr, 1, scale);
+
+        QMatrix4x4 m4;
+
+        m4.scale(.5f);
+        static float a = 0;
+        m4.rotate(a, 2, 5);
+        a += 1;
+
+        program->setUniformValue(m_attr, m4);
 
         glEnableVertexAttribArray(pos_attr);
 
@@ -72,12 +81,12 @@ protected:
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
 attribute vec3 position;
-uniform vec3 scale;
+uniform mat4 m;
 uniform vec4 color;
 varying vec4 v_color;
 
 void main(){
-    gl_Position = vec4(position*scale, 1.0);
+    gl_Position = m*vec4(position, 1.0);
     v_color = color;
 }
 )");
@@ -91,12 +100,14 @@ void main(){
         program->link();
         pos_attr = program->attributeLocation("position");
         col_attr = program->uniformLocation("color");
-        scale_attr = program->uniformLocation("scale");
+        m_attr = program->uniformLocation("m");
 
     }
 
 public:
     GLOutput(QWidget* parent): QOpenGLWidget(parent) {
+        QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
+        timer.start(10);
     }
 
 };

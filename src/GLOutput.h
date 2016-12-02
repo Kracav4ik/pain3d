@@ -27,6 +27,10 @@ protected:
                 1,1
         };
 
+        GLubyte indices[] = {
+                0,1,2,  1,2,3
+        };
+
         GLfloat colors[] = {
                 1,0,0,1,
                 0,1,0,1,
@@ -41,7 +45,7 @@ protected:
         glEnableVertexAttribArray(pos_attr);
         glEnableVertexAttribArray(col_attr);
 
-        glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
 
         glDisableVertexAttribArray(col_attr);
         glDisableVertexAttribArray(pos_attr);

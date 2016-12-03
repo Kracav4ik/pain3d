@@ -87,10 +87,10 @@
        <item>
         <widget class="QSlider" name="verticalSlider">
          <property name="minimum">
-          <number>-900</number>
+          <number>-180</number>
          </property>
          <property name="maximum">
-          <number>900</number>
+          <number>180</number>
          </property>
          <property name="singleStep">
           <number>10</number>

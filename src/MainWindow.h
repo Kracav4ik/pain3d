@@ -14,4 +14,11 @@ public:
         show();
     }
 
+public slots:
+    void on_verticalSlider_valueChanged(int i){
+        glWidget->set_rotate(i);
+        glWidget->update();
+    }
+
+
 };

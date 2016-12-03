@@ -40,6 +40,7 @@ private:
     GLuint pos_attr;
     GLuint col_attr;
     GLuint m_attr;
+    int angel;
     QTimer timer;
 
 protected:
@@ -65,7 +66,7 @@ protected:
                 1,0,2,  1,3,2,
                 0,1,5,  0,4,5,
                 0,2,6,  0,4,6,
-                1,2,6,  0,7,6,
+                2,3,7,  2,7,6,
                 4,5,7,  4,6,7,
                 1,5,7,  1,3,7,
         };
@@ -76,9 +77,7 @@ protected:
         QMatrix4x4 m4;
 
         m4.scale(.5f);
-        static float a = 0;
-        m4.rotate(a, 2, 5);
-        a += 1;
+        m4.rotate(angel, 2, 5);
 
         program->setUniformValue(m_attr, m4);
 
@@ -99,6 +98,8 @@ protected:
 
     virtual void initializeGL() override {
         initializeOpenGLFunctions();
+
+        glEnable(GL_DEPTH_TEST);
 
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
@@ -129,7 +130,11 @@ void main(){
 public:
     GLOutput(QWidget* parent): QOpenGLWidget(parent) {
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
-        timer.start(10);
+//        timer.start(100);
+    }
+
+    void set_rotate(int i){
+        angel = i;
     }
 
 };

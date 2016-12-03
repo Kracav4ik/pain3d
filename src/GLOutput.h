@@ -6,6 +6,33 @@
 #include <QOpenGLFunctions>
 #include <QTimer>
 
+namespace p3d {
+    struct Vector3 {
+        union {
+            struct {
+                float x, y, z;
+            };
+            float v[3];
+        };
+    };
+
+    struct Color {
+        union {
+            struct {
+                float r, g, b, a;
+            };
+            float c[4];
+        };
+    };
+
+    struct MeshPoint {
+        Vector3 pos;
+        Color   col;
+    };
+}
+
+using namespace p3d;
+
 class GLOutput : public QOpenGLWidget, private QOpenGLFunctions {
 Q_OBJECT
 private:
@@ -17,21 +44,21 @@ private:
 
 protected:
     virtual void paintGL() override {
-        glClearColor(0, 1, 1, 1);
+        glClearColor(0.5, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         program->bind();
 
         GLfloat scale[] = {.5f, .5f, .5f};
 
-        GLfloat vertices[] = {
-                -1, -1,  1,
-                -1,  1,  1,
-                 1, -1,  1,
-                 1,  1,  1,
-                -1, -1, -1,
-                -1,  1, -1,
-                 1, -1, -1,
-                 1,  1, -1
+        MeshPoint points[] = {
+                -1, -1,  1,   0, 0, 1, 1,
+                -1,  1,  1,   0, 1, 1, 1,
+                 1, -1,  1,   1, 0, 1, 1,
+                 1,  1,  1,   1, 1, 1, 1,
+                -1, -1, -1,   0, 0, 0, 1,
+                -1,  1, -1,   0, 1, 0, 1,
+                 1, -1, -1,   1, 0, 0, 1,
+                 1,  1, -1,   1, 1, 0, 1,
         };
 
         GLubyte indices[] = {
@@ -43,15 +70,8 @@ protected:
                 1,5,7,  1,3,7,
         };
 
-        GLfloat colors[] = {
-                1,0,0,1,
-                0,1,0,1,
-                0,0,1,1,
-                1,1,0,1
-        };
-
-        glVertexAttribPointer(pos_attr,3,GL_FLOAT,GL_FALSE,0,vertices);
-        glUniform4fv(col_attr, 1, colors);
+        glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].pos);
+        glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].col);
 
         QMatrix4x4 m4;
 
@@ -63,10 +83,12 @@ protected:
         program->setUniformValue(m_attr, m4);
 
         glEnableVertexAttribArray(pos_attr);
+        glEnableVertexAttribArray(col_attr);
 
         glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_BYTE, indices);
 
         glDisableVertexAttribArray(pos_attr);
+        glDisableVertexAttribArray(col_attr);
 
 
         program->release();
@@ -82,7 +104,7 @@ protected:
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
 attribute vec3 position;
 uniform mat4 m;
-uniform vec4 color;
+attribute vec4 color;
 varying vec4 v_color;
 
 void main(){
@@ -99,7 +121,7 @@ void main(){
 )");
         program->link();
         pos_attr = program->attributeLocation("position");
-        col_attr = program->uniformLocation("color");
+        col_attr = program->attributeLocation("color");
         m_attr = program->uniformLocation("m");
 
     }

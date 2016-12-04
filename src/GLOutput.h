@@ -37,9 +37,10 @@ class GLOutput : public QOpenGLWidget, private QOpenGLFunctions {
 Q_OBJECT
 private:
     QOpenGLShaderProgram* program;
-    GLuint pos_attr;
-    GLuint col_attr;
-    GLuint m_attr;
+    GLuint a_position;
+    GLuint a_color;
+    GLuint u_color;
+    GLuint u_transform;
     int angel;
     QTimer timer;
 
@@ -62,7 +63,7 @@ protected:
                  1,  1, -1,   1, 1, 0, 1,
         };
 
-        GLubyte indices[] = {
+        GLubyte triangle_indices[] = {
                 1,0,2,  1,3,2,
                 0,1,5,  0,4,5,
                 0,2,6,  0,4,6,
@@ -71,23 +72,35 @@ protected:
                 1,5,7,  1,3,7,
         };
 
-        glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].pos);
-        glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].col);
+        GLubyte outline_indices[] = {
+                0, 1,  1, 3,
+                3, 2,  2, 0,
+                4, 5,  5, 7,
+                7, 6,  6, 4,
+                0, 4,  1, 5,
+                3, 7,  2, 6,
+        };
+
+        glVertexAttribPointer(a_position, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].pos);
+        glVertexAttribPointer(a_color, 4, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points[0].col);
 
         QMatrix4x4 m4;
 
         m4.scale(.5f);
         m4.rotate(angel, 2, 5);
 
-        program->setUniformValue(m_attr, m4);
+        program->setUniformValue(u_transform, m4);
 
-        glEnableVertexAttribArray(pos_attr);
-        glEnableVertexAttribArray(col_attr);
+        glEnableVertexAttribArray(a_position);
+        glEnableVertexAttribArray(a_color);
 
-        glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_BYTE, indices);
+        program->setUniformValue(u_color, 1,1,1,1);
+        glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_BYTE, triangle_indices);
+        program->setUniformValue(u_color, 0,0,0,1);
+        glDrawElements(GL_LINES, 12*2, GL_UNSIGNED_BYTE, outline_indices);
 
-        glDisableVertexAttribArray(pos_attr);
-        glDisableVertexAttribArray(col_attr);
+        glDisableVertexAttribArray(a_position);
+        glDisableVertexAttribArray(a_color);
 
 
         program->release();
@@ -100,17 +113,20 @@ protected:
         initializeOpenGLFunctions();
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LINE_SMOOTH);
+        glLineWidth(.74f);
 
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
-attribute vec3 position;
-uniform mat4 m;
-attribute vec4 color;
+attribute vec3 a_position;
+uniform mat4 u_transform;
+uniform vec4 u_color;
+attribute vec4 a_color;
 varying vec4 v_color;
 
 void main(){
-    gl_Position = m*vec4(position, 1.0);
-    v_color = color;
+    gl_Position = u_transform*vec4(a_position, 1.0);
+    v_color = a_color*u_color;
 }
 )");
         program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
@@ -121,10 +137,10 @@ void main(){
 }
 )");
         program->link();
-        pos_attr = program->attributeLocation("position");
-        col_attr = program->attributeLocation("color");
-        m_attr = program->uniformLocation("m");
-
+        a_position = (GLuint) program->attributeLocation("a_position");
+        a_color = (GLuint) program->attributeLocation("a_color");
+        u_color = (GLuint) program->uniformLocation("u_color");
+        u_transform = (GLuint) program->uniformLocation("u_transform");
     }
 
 public:

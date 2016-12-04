@@ -96,7 +96,10 @@
           <number>10</number>
          </property>
          <property name="pageStep">
-          <number>50</number>
+          <number>30</number>
+         </property>
+         <property name="value">
+          <number>15</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -105,7 +108,7 @@
           <enum>QSlider::TicksBelow</enum>
          </property>
          <property name="tickInterval">
-          <number>50</number>
+          <number>30</number>
          </property>
         </widget>
        </item>

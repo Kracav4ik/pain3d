@@ -26,6 +26,10 @@ set(EXE_SOURCES
         src/MainWindow.h
         src/GLOutput.cpp
         src/GLOutput.h
+        src/RenderItem.h
+        src/Grid.h
+        src/Cube.h
+        src/Mesh.h
         )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")

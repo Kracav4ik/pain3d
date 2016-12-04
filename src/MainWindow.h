@@ -11,6 +11,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow {
 public:
     MainWindow() {
         setupUi(this);
+        on_verticalSlider_valueChanged(verticalSlider->value());
+
         show();
     }
 

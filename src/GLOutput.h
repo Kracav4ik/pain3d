@@ -17,13 +17,49 @@ Q_OBJECT
 private:
     QTimer timer;
     std::vector<RenderItem*> render_items;
+    QOpenGLShaderProgram* program;
+    GLuint pos_attr;
+    GLuint uv_attr;
+    GLuint scale_attr;
+    GLuint texture;
+    GLuint tex_attr;
 
 protected:
     virtual void paintGL() override {
         glClear(GL_COLOR_BUFFER_BIT);
-        for (int i = 0; i < render_items.size(); ++i) {
-            render_items[i]->render();
-        }
+//        for (int i = 0; i < render_items.size(); ++i) {
+//            render_items[i]->render();
+//        }
+        program->bind();
+
+        GLfloat scale[] = {200.f/width(), 200.f/height()};
+
+        GLfloat vertices[] = {
+                -1,-1,0,0,
+                -1,1,0,1,
+                1,-1,1,0,
+                1,1,1,1,
+        };
+
+        GLubyte indices[] = {
+                0,1,2,  1,2,3
+        };
+
+        glVertexAttribPointer(pos_attr,2,GL_FLOAT,GL_FALSE,4 * sizeof(GLfloat),vertices);
+        glVertexAttribPointer(uv_attr,2,GL_FLOAT,GL_FALSE,4 * sizeof(GLfloat),vertices + 2);
+        glUniform2f(scale_attr,scale[0], scale[1]);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glEnableVertexAttribArray(pos_attr);
+        glEnableVertexAttribArray(uv_attr);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+
+        glDisableVertexAttribArray(pos_attr);
+        glDisableVertexAttribArray(uv_attr);
+
+
+        program->release();
     }
 
     virtual void resizeGL(int w, int h) override {
@@ -32,12 +68,59 @@ protected:
     virtual void initializeGL() override {
         initializeOpenGLFunctions();
 
+        texture = loadBMP_custom("../tex.bmp");
+
         for (int i = 0; i < render_items.size(); ++i) {
-            render_items[i]->init_gl();
+            //render_items[i]->init_gl();
         }
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LINE_SMOOTH);
         glLineWidth(.74f);
+
+        program = new QOpenGLShaderProgram(this);
+        program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
+#version 330 core
+
+// Input vertex data, different for all executions of this shader.
+attribute vec2 a_position;
+uniform vec2 u_scale;
+attribute vec2 a_vertexUV;
+
+// Output data ; will be interpolated for each fragment.
+out vec2 UV;
+
+void main(){
+
+    gl_Position =  vec4(a_position*u_scale, 0, 1);
+
+    // UV of the vertex. No special space for this one.
+    UV = a_vertexUV;
+}
+)");
+        program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
+#version 330 core
+
+// Interpolated values from the vertex shaders
+in vec2 UV;
+
+// Ouput data
+out vec3 color;
+
+// Values that stay constant for the whole mesh.
+uniform sampler2D myTextureSampler;
+
+void main(){
+
+    // Output color = color of the texture at the specified UV
+    color = texture( myTextureSampler, UV ).rgb;
+    //color = vec3(UV, 1);
+}
+)");
+        program->link();
+        pos_attr = (GLuint) program->attributeLocation("a_position");
+        uv_attr = (GLuint) program->attributeLocation("a_vertexUV");
+        scale_attr = (GLuint) program->uniformLocation("u_scale");
+        tex_attr = (GLuint) program->uniformLocation("myTextureSampler");
 
     }
 
@@ -54,5 +137,39 @@ public:
         ((Grid*)render_items[0])->set_rotate(i);
     }
 
+    GLuint loadBMP_custom(const char* imagepath){
+        unsigned char header[54];
+        unsigned int dataPos;
+        unsigned int width, height;
+        unsigned int imageSize;
+        unsigned char* data;
+
+        FILE* file = fopen(imagepath,"rb");
+        fread(header, 1, 54, file);
+
+        dataPos    = *(unsigned int*)&(header[0x0A]);
+        imageSize  = *(unsigned int*)&(header[0x22]);
+        width      = *(unsigned int*)&(header[0x12]);
+        height     = *(unsigned int*)&(header[0x16]);
+        if (imageSize==0){
+            imageSize=width*height*3;
+        }
+        data = new unsigned char [imageSize];
+
+        fread(data,1,imageSize,file);
+
+        fclose(file);
+
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        return  textureID;
+    }
 };
 

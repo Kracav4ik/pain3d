@@ -23,6 +23,7 @@ private:
     GLuint scale_attr;
     GLuint texture;
     GLuint tex_attr;
+    Mesh mesh;
 
 protected:
     virtual void paintGL() override {
@@ -32,22 +33,22 @@ protected:
 //        }
         program->bind();
 
-        GLfloat scale[] = {200.f/width(), 200.f/height()};
+        GLfloat scale[] = {200.f / width(), 200.f / height()};
 
         GLfloat vertices[] = {
-                -1,-1,0,0,
-                -1,1,0,1,
-                1,-1,1,0,
-                1,1,1,1,
+                -1, -1, 0, 0,
+                -1, 1, 0, 1,
+                1, -1, 1, 0,
+                1, 1, 1, 1,
         };
 
         GLubyte indices[] = {
-                0,1,2,  1,2,3
+                0, 1, 2, 1, 2, 3
         };
 
-        glVertexAttribPointer(pos_attr,2,GL_FLOAT,GL_FALSE,4 * sizeof(GLfloat),vertices);
-        glVertexAttribPointer(uv_attr,2,GL_FLOAT,GL_FALSE,4 * sizeof(GLfloat),vertices + 2);
-        glUniform2f(scale_attr,scale[0], scale[1]);
+        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices);
+        glVertexAttribPointer(uv_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices + 2);
+        glUniform2f(scale_attr, scale[0], scale[1]);
         glBindTexture(GL_TEXTURE_2D, texture);
 
         glEnableVertexAttribArray(pos_attr);
@@ -60,6 +61,7 @@ protected:
 
 
         program->release();
+        mesh.render();
     }
 
     virtual void resizeGL(int w, int h) override {
@@ -67,7 +69,9 @@ protected:
 
     virtual void initializeGL() override {
         initializeOpenGLFunctions();
+        glClearColor(.3, 0, .3, 1);
 
+        mesh.init_gl();
         texture = loadBMP_custom("../tex.bmp");
 
         for (int i = 0; i < render_items.size(); ++i) {
@@ -125,38 +129,41 @@ void main(){
     }
 
 public:
-    GLOutput(QWidget* parent): QOpenGLWidget(parent) {
+    GLOutput(QWidget* parent) :
+            QOpenGLWidget(parent) {
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
         Grid* grid = new Grid();
         render_items.push_back(grid);
+        mesh.load();
 //        timer.start(100);
     }
 
-    void set_rotate(int i){
+    void set_rotate(int i) {
         // TODO: pass transform in render
-        ((Grid*)render_items[0])->set_rotate(i);
+//        ((Grid*) render_items[0])->set_rotate(i);
+        mesh.set_rotate(i);
     }
 
-    GLuint loadBMP_custom(const char* imagepath){
+    GLuint loadBMP_custom(const char* imagepath) {
         unsigned char header[54];
         unsigned int dataPos;
         unsigned int width, height;
         unsigned int imageSize;
         unsigned char* data;
 
-        FILE* file = fopen(imagepath,"rb");
+        FILE* file = fopen(imagepath, "rb");
         fread(header, 1, 54, file);
 
-        dataPos    = *(unsigned int*)&(header[0x0A]);
-        imageSize  = *(unsigned int*)&(header[0x22]);
-        width      = *(unsigned int*)&(header[0x12]);
-        height     = *(unsigned int*)&(header[0x16]);
-        if (imageSize==0){
-            imageSize=width*height*3;
+        dataPos = *(unsigned int*) &(header[0x0A]);
+        imageSize = *(unsigned int*) &(header[0x22]);
+        width = *(unsigned int*) &(header[0x12]);
+        height = *(unsigned int*) &(header[0x16]);
+        if (imageSize == 0) {
+            imageSize = width * height * 3;
         }
-        data = new unsigned char [imageSize];
+        data = new unsigned char[imageSize];
 
-        fread(data,1,imageSize,file);
+        fread(data, 1, imageSize, file);
 
         fclose(file);
 
@@ -165,11 +172,11 @@ public:
 
         glBindTexture(GL_TEXTURE_2D, textureID);
 
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        return  textureID;
+        return textureID;
     }
 };
 

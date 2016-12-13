@@ -16,7 +16,7 @@ private:
     GLuint u_color;
     GLuint a_position;
     int angle;
-    std::vector<Vector3> points;
+    std::vector<Vertex3> points;
 public:
     Grid()
         : program(nullptr)

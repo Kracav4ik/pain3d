@@ -103,7 +103,7 @@ attribute vec3 a_pos;
 attribute vec2 a_uv;
 uniform mat4 u_mvp;
 
-out vec2 UV;
+varying vec2 UV;
 
 void main(){
     UV = a_uv;
@@ -112,11 +112,12 @@ void main(){
 }
 )");
             program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
-in vec2 UV;
+varying vec2 UV;
 uniform sampler2D u_tex;
 
 void main(){
-    gl_FragColor = texture( u_tex, UV );
+    gl_FragColor = texture2D( u_tex, UV );
+    //gl_FragColor = vec4(UV, 0, 1);
 }
 )");
             program->link();

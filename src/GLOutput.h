@@ -83,15 +83,13 @@ protected:
 
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
-#version 330 core
-
 // Input vertex data, different for all executions of this shader.
 attribute vec2 a_position;
 uniform vec2 u_scale;
 attribute vec2 a_vertexUV;
 
 // Output data ; will be interpolated for each fragment.
-out vec2 UV;
+varying vec2 UV;
 
 void main(){
 
@@ -102,13 +100,8 @@ void main(){
 }
 )");
         program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
-#version 330 core
-
 // Interpolated values from the vertex shaders
-in vec2 UV;
-
-// Ouput data
-out vec3 color;
+varying vec2 UV;
 
 // Values that stay constant for the whole mesh.
 uniform sampler2D myTextureSampler;
@@ -116,8 +109,8 @@ uniform sampler2D myTextureSampler;
 void main(){
 
     // Output color = color of the texture at the specified UV
-    color = texture( myTextureSampler, UV ).rgb;
-    //color = vec3(UV, 1);
+    gl_FragColor = texture2D( myTextureSampler, UV );
+    //gl_FragColor = vec4(UV, 1, 1);
 }
 )");
         program->link();
@@ -125,7 +118,6 @@ void main(){
         uv_attr = (GLuint) program->attributeLocation("a_vertexUV");
         scale_attr = (GLuint) program->uniformLocation("u_scale");
         tex_attr = (GLuint) program->uniformLocation("myTextureSampler");
-
     }
 
 public:

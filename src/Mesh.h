@@ -64,6 +64,7 @@ namespace p3d {
         GLuint a_uv;
         GLuint u_mvp;
         GLuint u_tex;
+        GLuint texture;
     public:
 
         void render() {
@@ -77,6 +78,8 @@ namespace p3d {
             glEnableVertexAttribArray(a_pos);
             glEnableVertexAttribArray(a_uv);
 
+            glBindTexture(GL_TEXTURE_2D, texture);
+
             program->setUniformValue(u_mvp, mat);
 
             glDrawArrays(GL_TRIANGLES, 0, points.size());
@@ -89,9 +92,9 @@ namespace p3d {
 
         }
 
-        void init_gl() {
+        void init_gl(GLuint tex) {
             initializeOpenGLFunctions();
-
+            texture = tex;
             glEnable(GL_LINE_SMOOTH);
             glLineWidth(1.2f);
             program = new QOpenGLShaderProgram();
@@ -113,13 +116,12 @@ in vec2 UV;
 uniform sampler2D u_tex;
 
 void main(){
-//    gl_FragColor = texture( u_tex, UV );
-    gl_FragColor = vec4(UV, 0, 1);
+    gl_FragColor = texture( u_tex, UV );
 }
 )");
             program->link();
             a_pos = (GLuint) program->attributeLocation("a_pos");
-            a_uv = (GLuint) program->attributeLocation("a_uv");
+            a_uv  = (GLuint) program->attributeLocation("a_uv");
             u_mvp = (GLuint) program->uniformLocation("u_mvp");
             u_tex = (GLuint) program->uniformLocation("u_tex");
         }
@@ -129,6 +131,7 @@ void main(){
             std::vector<Vertex3> vertices;
             std::vector<TexCoords> tex_coords;
             std::vector<Vertex3> normals;
+            points.clear();
 
             QFile file("../example.obj");
             file.open(QIODevice::ReadOnly | QIODevice::Text);

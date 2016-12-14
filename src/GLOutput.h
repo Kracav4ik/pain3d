@@ -71,8 +71,8 @@ protected:
         initializeOpenGLFunctions();
         glClearColor(.3, 0, .3, 1);
 
-        mesh.init_gl();
         texture = loadBMP_custom("../tex.bmp");
+        mesh.init_gl(loadBMP_custom("../uvtemplate.bmp"));
 
         for (int i = 0; i < render_items.size(); ++i) {
             //render_items[i]->init_gl();

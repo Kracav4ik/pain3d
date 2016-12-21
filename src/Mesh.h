@@ -64,19 +64,20 @@ namespace p3d {
         GLuint a_uv;
         GLuint u_mvp;
         GLuint u_tex;
+        GLuint a_norm;
         GLuint texture;
     public:
 
         void render() {
             program->bind();
 
-
-            glVertexAttribPointer(a_pos, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), points.data());
-            glVertexAttribPointer(a_uv, 2, GL_FLOAT, GL_FALSE, sizeof(MeshPoint),
-                                  ((char*) points.data()) + sizeof(Vertex3));
+            glVertexAttribPointer(a_pos, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points.data()[0].vertex);
+            glVertexAttribPointer(a_uv, 2, GL_FLOAT, GL_FALSE, sizeof(MeshPoint),  &points.data()[0].tex_coord);
+            glVertexAttribPointer(a_norm, 2, GL_FLOAT, GL_FALSE, sizeof(MeshPoint),  &points.data()[0].normal);
 
             glEnableVertexAttribArray(a_pos);
             glEnableVertexAttribArray(a_uv);
+            glEnableVertexAttribArray(a_norm);
 
             glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -86,6 +87,7 @@ namespace p3d {
 
             glDisableVertexAttribArray(a_pos);
             glDisableVertexAttribArray(a_uv);
+            glDisableVertexAttribArray(a_norm);
 
 
             program->release();
@@ -101,27 +103,35 @@ namespace p3d {
             program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
 attribute vec3 a_pos;
 attribute vec2 a_uv;
+attribute vec3 a_norm;
 uniform mat4 u_mvp;
 
 out vec2 UV;
+out vec3 NORM;
 
 void main(){
     UV = a_uv;
+    NORM = (u_mvp * vec4(a_norm, 0)).xyz;
     gl_Position = u_mvp*vec4(a_pos, 1.0);
 
 }
 )");
             program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
 in vec2 UV;
+in vec3 NORM;
 uniform sampler2D u_tex;
 
+
 void main(){
-    gl_FragColor = texture( u_tex, UV );
+//    gl_FragColor = texture( u_tex, UV );
+//    gl_FragColor = texture( u_tex, UV );
+    gl_FragColor = vec4( 0.5 * NORM + vec3(0.5, 0.5, 0.5), 1 );
 }
 )");
             program->link();
             a_pos = (GLuint) program->attributeLocation("a_pos");
-            a_uv  = (GLuint) program->attributeLocation("a_uv");
+            a_uv = (GLuint) program->attributeLocation("a_uv");
+            a_norm = (GLuint) program->attributeLocation("a_norm");
             u_mvp = (GLuint) program->uniformLocation("u_mvp");
             u_tex = (GLuint) program->uniformLocation("u_tex");
         }

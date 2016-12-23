@@ -5,6 +5,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 #include <QTimer>
+#include <QWheelEvent>
 #include "RenderItem.h"
 #include "Grid.h"
 #include "Mesh.h"
@@ -22,11 +23,31 @@ private:
     QMatrix4x4 mvp;
     GLuint uv_attr;
     GLuint texture;
+    float scale;
+    float rot_x;
+    float rot_y;
+    int rot_i;
     GLuint tex_attr;
     GLuint u_mvp;
     Mesh mesh;
 
 protected:
+    virtual void wheelEvent(QWheelEvent* event) override {
+        if (event->angleDelta().y() > 0) {
+            scale *= 1.2;
+        } else {
+            scale /= 1.2;
+        }
+        refresh_mvp();
+    }
+
+    void refresh_mvp() {
+        mvp.setToIdentity();
+        mvp.scale(scale);
+        mvp.rotate(rot_i, 1, 1, 1);
+        update();
+    }
+
     virtual void paintGL() override {
         glClear(GL_COLOR_BUFFER_BIT);
         for (int i = 0; i < render_items.size(); ++i) {
@@ -122,7 +143,10 @@ void main(){
 
 public:
     GLOutput(QWidget* parent) :
-            QOpenGLWidget(parent) {
+            QOpenGLWidget(parent),
+            scale(0.3),
+            rot_x(0),
+            rot_y(0) {
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
         Grid* grid = new Grid();
         render_items.push_back(grid);
@@ -131,9 +155,8 @@ public:
     }
 
     void set_rotate(int i) {
-        mvp.setToIdentity();
-        mvp.scale(0.3);
-        mvp.rotate(i, 1, 1, 1);
+        rot_i = i;
+        refresh_mvp();
     }
 
     GLuint loadBMP_custom(const char* imagepath) {

@@ -73,7 +73,7 @@ protected:
         glClearColor(.3, 0, .3, 1);
 
         texture = loadBMP_custom("../tex.bmp");
-        mesh.set_tex(loadBMP_custom("../uvtemplate.bmp"));
+        mesh.set_tex(loadBMP_custom("../aaa.bmp"));
         mesh.init_gl();
 
         for (int i = 0; i < render_items.size(); ++i) {
@@ -132,7 +132,7 @@ public:
 
     void set_rotate(int i) {
         mvp.setToIdentity();
-        mvp.scale(0.17);
+        mvp.scale(0.3);
         mvp.rotate(i, 1, 1, 1);
     }
 

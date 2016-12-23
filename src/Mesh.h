@@ -90,7 +90,11 @@ namespace p3d {
 
             glBindTexture(GL_TEXTURE_2D, texture);
 
-            program->setUniformValue(u_mvp, mvp);
+            QMatrix4x4 m;
+            m.setToIdentity();
+            m.rotate(90, 0, 1);
+            m.translate(2, 0);
+            program->setUniformValue(u_mvp, mvp*m);
 
             glDrawArrays(GL_TRIANGLES, 0, points.size());
 
@@ -153,7 +157,7 @@ void main(){
             std::vector<Vertex3> normals;
             points.clear();
 
-            QFile file("../example.obj");
+            QFile file("../ddd.obj");
             file.open(QIODevice::ReadOnly | QIODevice::Text);
             QTextStream in(&file);
             while (!in.atEnd()) {

@@ -116,8 +116,8 @@ attribute vec2 a_uv;
 attribute vec3 a_norm;
 uniform mat4 u_mvp;
 
-out vec2 UV;
-out vec3 NORM;
+varying vec2 UV;
+varying vec3 NORM;
 
 void main(){
     UV = a_uv;
@@ -127,15 +127,15 @@ void main(){
 }
 )");
             program->addShaderFromSourceCode(QOpenGLShader::Fragment, R"(
-in vec2 UV;
-in vec3 NORM;
+varying vec2 UV;
+varying vec3 NORM;
 uniform sampler2D u_tex;
 
 
 void main(){
-//    gl_FragColor = texture( u_tex, UV );
-//    gl_FragColor = texture( u_tex, UV );
-    gl_FragColor = vec4( 0.5 * NORM + vec3(0.5, 0.5, 0.5), 1 );
+//  gl_FragColor = vec4(UV, 0, 1);
+//  gl_FragColor = vec4( 0.5 * NORM + vec3(0.5, 0.5, 0.5), 1 );
+    gl_FragColor = texture2D( u_tex, UV );
 }
 )");
             program->link();

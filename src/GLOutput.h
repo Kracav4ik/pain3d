@@ -29,6 +29,7 @@ private:
     int rot_i;
     GLuint tex_attr;
     GLuint u_mvp;
+    QPoint pos;
     Mesh mesh;
 
 protected:
@@ -41,9 +42,26 @@ protected:
         refresh_mvp();
     }
 
+    virtual void mouseMoveEvent(QMouseEvent* event) override {
+        QPoint point = event->pos();
+        if (pos.isNull()) {
+            pos = point;
+            return;
+        }
+        if (event->buttons() & Qt::LeftButton) {
+            QPoint delta = pos - point;
+            rot_x += delta.x();
+            rot_y += delta.y();
+            refresh_mvp();
+        }
+        pos = point;
+    }
+
     void refresh_mvp() {
         mvp.setToIdentity();
         mvp.scale(scale);
+        mvp.rotate(rot_x, 0, 1, 0);
+        mvp.rotate(rot_y, 1, 0, 0);
         mvp.rotate(rot_i, 1, 1, 1);
         update();
     }
@@ -151,6 +169,7 @@ public:
         Grid* grid = new Grid();
         render_items.push_back(grid);
         mesh.load();
+        setMouseTracking(true);
 //        timer.start(100);
     }
 

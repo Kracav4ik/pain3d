@@ -13,6 +13,8 @@ namespace p3d {
             float a[3];
         };
 
+        Vertex3(float xx, float yy, float zz): x(xx), y(yy), z(zz) {}
+
         void set(float xx, float yy, float zz) {
             x = xx;
             y = yy;
@@ -41,6 +43,14 @@ namespace p3d {
             };
             float c[4];
         };
+        Color(float rr, float gg, float bb, float aa=1) : r(rr), g(gg), b(bb), a(aa) {}
+
+        void set(float rr, float gg, float bb, float aa=1) {
+            r = rr;
+            g = gg;
+            b = bb;
+            a = aa;
+        }
     };
 
     struct MeshPoint {
@@ -52,13 +62,12 @@ namespace p3d {
         Vertex3 vertex;
         TexCoords tex_coord;
         Vertex3 normal;
-
     };
 
-    class Mesh : private QOpenGLFunctions {
+
+    class Mesh : RenderItem, private QOpenGLFunctions {
     private:
         std::vector<MeshPoint> points;
-        QMatrix4x4 mat;
         QOpenGLShaderProgram* program;
         GLuint a_pos;
         GLuint a_uv;
@@ -68,7 +77,7 @@ namespace p3d {
         GLuint texture;
     public:
 
-        void render() {
+        void render(const QMatrix4x4& mvp) override{
             program->bind();
 
             glVertexAttribPointer(a_pos, 3, GL_FLOAT, GL_FALSE, sizeof(MeshPoint), &points.data()[0].vertex);
@@ -81,7 +90,7 @@ namespace p3d {
 
             glBindTexture(GL_TEXTURE_2D, texture);
 
-            program->setUniformValue(u_mvp, mat);
+            program->setUniformValue(u_mvp, mvp);
 
             glDrawArrays(GL_TRIANGLES, 0, points.size());
 
@@ -89,14 +98,15 @@ namespace p3d {
             glDisableVertexAttribArray(a_uv);
             glDisableVertexAttribArray(a_norm);
 
-
             program->release();
-
         }
 
-        void init_gl(GLuint tex) {
-            initializeOpenGLFunctions();
+        void set_tex(GLuint tex){
             texture = tex;
+        }
+
+        void init_gl() override {
+            initializeOpenGLFunctions();
             glEnable(GL_LINE_SMOOTH);
             glLineWidth(1.2f);
             program = new QOpenGLShaderProgram();
@@ -150,8 +160,7 @@ void main(){
                 QString line = in.readLine();
                 QStringList list_line = line.split(" ");
                 if (list_line[0] == "v") {
-                    Vertex3 ver;
-                    ver.set(list_line[1].toFloat(), list_line[2].toFloat(), list_line[3].toFloat());
+                    Vertex3 ver(list_line[1].toFloat(), list_line[2].toFloat(), list_line[3].toFloat());
                     vertices.push_back(ver);
                 }
                 else if (list_line[0] == "vt") {
@@ -160,8 +169,7 @@ void main(){
                     tex_coords.push_back(tex);
                 }
                 else if (list_line[0] == "vn") {
-                    Vertex3 nor;
-                    nor.set(list_line[1].toFloat(), list_line[2].toFloat(), list_line[3].toFloat());
+                    Vertex3 nor(list_line[1].toFloat(), list_line[2].toFloat(), list_line[3].toFloat());
                     normals.push_back(nor);
                 }
                 else if (list_line[0] == "f") {
@@ -174,12 +182,6 @@ void main(){
                     }
                 }
             }
-        }
-
-        void set_rotate(int i) {
-            mat.setToIdentity();
-            mat.scale(0.7);
-            mat.rotate(i, 1, 1, 1);
         }
     };
 }

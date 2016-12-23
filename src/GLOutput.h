@@ -19,21 +19,20 @@ private:
     std::vector<RenderItem*> render_items;
     QOpenGLShaderProgram* program;
     GLuint pos_attr;
+    QMatrix4x4 mvp;
     GLuint uv_attr;
-    GLuint scale_attr;
     GLuint texture;
     GLuint tex_attr;
+    GLuint u_mvp;
     Mesh mesh;
 
 protected:
     virtual void paintGL() override {
         glClear(GL_COLOR_BUFFER_BIT);
-//        for (int i = 0; i < render_items.size(); ++i) {
-//            render_items[i]->render();
-//        }
+        for (int i = 0; i < render_items.size(); ++i) {
+            render_items[i]->render(mvp);
+        }
         program->bind();
-
-        GLfloat scale[] = {200.f / width(), 200.f / height()};
 
         GLfloat vertices[] = {
                 -1, -1, 0, 0,
@@ -48,7 +47,9 @@ protected:
 
         glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices);
         glVertexAttribPointer(uv_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices + 2);
-        glUniform2f(scale_attr, scale[0], scale[1]);
+
+        program->setUniformValue(u_mvp, mvp);
+
         glBindTexture(GL_TEXTURE_2D, texture);
 
         glEnableVertexAttribArray(pos_attr);
@@ -61,7 +62,7 @@ protected:
 
 
         program->release();
-        mesh.render();
+        mesh.render(mvp);
     }
 
     virtual void resizeGL(int w, int h) override {
@@ -72,10 +73,11 @@ protected:
         glClearColor(.3, 0, .3, 1);
 
         texture = loadBMP_custom("../tex.bmp");
-        mesh.init_gl(loadBMP_custom("../uvtemplate.bmp"));
+        mesh.set_tex(loadBMP_custom("../uvtemplate.bmp"));
+        mesh.init_gl();
 
         for (int i = 0; i < render_items.size(); ++i) {
-            //render_items[i]->init_gl();
+            render_items[i]->init_gl();
         }
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LINE_SMOOTH);
@@ -87,16 +89,14 @@ protected:
 
 // Input vertex data, different for all executions of this shader.
 attribute vec2 a_position;
-uniform vec2 u_scale;
 attribute vec2 a_vertexUV;
+uniform mat4 u_mvp;
 
 // Output data ; will be interpolated for each fragment.
 out vec2 UV;
 
 void main(){
-
-    gl_Position =  vec4(a_position*u_scale, 0, 1);
-
+    gl_Position = u_mvp * vec4(a_position, 0, 1);
     // UV of the vertex. No special space for this one.
     UV = a_vertexUV;
 }
@@ -123,7 +123,7 @@ void main(){
         program->link();
         pos_attr = (GLuint) program->attributeLocation("a_position");
         uv_attr = (GLuint) program->attributeLocation("a_vertexUV");
-        scale_attr = (GLuint) program->uniformLocation("u_scale");
+        u_mvp = (GLuint) program->uniformLocation("u_mvp");
         tex_attr = (GLuint) program->uniformLocation("myTextureSampler");
 
     }
@@ -139,9 +139,9 @@ public:
     }
 
     void set_rotate(int i) {
-        // TODO: pass transform in render
-//        ((Grid*) render_items[0])->set_rotate(i);
-        mesh.set_rotate(i);
+        mvp.setToIdentity();
+        mvp.scale(0.17);
+        mvp.rotate(i, 1, 1, 1);
     }
 
     GLuint loadBMP_custom(const char* imagepath) {

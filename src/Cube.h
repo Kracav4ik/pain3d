@@ -6,7 +6,7 @@ class Cube : public RenderItem {
 private:
 
 public:
-    virtual void render() override {
+    virtual void render(const QMatrix4x4& mvp) override {
 
     }
 

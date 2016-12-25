@@ -50,8 +50,8 @@ protected:
         }
         if (event->buttons() & Qt::LeftButton) {
             QPoint delta = pos - point;
-            rot_x += delta.x();
-            rot_y += delta.y();
+            rot_x += .5 * delta.x();
+            rot_y += .5 * delta.y();
             refresh_mvp();
         }
         pos = point;

@@ -21,11 +21,14 @@ private:
     QOpenGLShaderProgram* program;
     GLuint pos_attr;
     QMatrix4x4 mvp;
+    QMatrix4x4 mvp2;
     GLuint uv_attr;
     GLuint texture;
     float scale;
     float rot_x;
     float rot_y;
+    float rot_x2;
+    float rot_y2;
     int rot_i;
     GLuint tex_attr;
     GLuint u_mvp;
@@ -48,10 +51,16 @@ protected:
             pos = point;
             return;
         }
+
         if (event->buttons() & Qt::LeftButton) {
             QPoint delta = pos - point;
             rot_x += .5 * delta.x();
             rot_y += .5 * delta.y();
+            refresh_mvp();
+        } else if (event->buttons() & Qt::RightButton) {
+            QPoint delta2 = pos - point;
+            rot_x2 += .5 * delta2.x();
+            rot_y2 += .5 * delta2.y();
             refresh_mvp();
         }
         pos = point;
@@ -60,9 +69,14 @@ protected:
     void refresh_mvp() {
         mvp.setToIdentity();
         mvp.scale(scale);
+        mvp.rotate(rot_i, 1, 1, 1);
         mvp.rotate(rot_x, 0, 1, 0);
         mvp.rotate(rot_y, 1, 0, 0);
-        mvp.rotate(rot_i, 1, 1, 1);
+
+        mvp2 = mvp;
+        mvp2.rotate(rot_x2, 0, 1, 0);
+        mvp2.rotate(rot_y2, 1, 0, 0);
+
         update();
     }
 
@@ -87,7 +101,7 @@ protected:
         glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices);
         glVertexAttribPointer(uv_attr, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), vertices + 2);
 
-        program->setUniformValue(u_mvp, mvp);
+        program->setUniformValue(u_mvp, mvp2);
 
         glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -101,7 +115,7 @@ protected:
 
 
         program->release();
-        mesh.render(mvp);
+        mesh.render(mvp2);
     }
 
     virtual void resizeGL(int w, int h) override {
@@ -164,7 +178,9 @@ public:
             QOpenGLWidget(parent),
             scale(0.3),
             rot_x(0),
-            rot_y(0) {
+            rot_y(0),
+            rot_x2(0),
+            rot_y2(0){
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
         Grid* grid = new Grid();
         render_items.push_back(grid);

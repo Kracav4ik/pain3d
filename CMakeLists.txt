@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-project(PAIN2D)
+project(PAIN3D)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(CMAKE_PREFIX_PATH c:/Qt/Qt5.6.0/5.6/mingw49_32/)
+# QTDIR must point to c:/Qt/5.7/mingw53_32/ or similar
+set(CMAKE_PREFIX_PATH "${QTDIR}")
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

@@ -9,6 +9,7 @@
 #include "RenderItem.h"
 #include "Grid.h"
 #include "Mesh.h"
+#include "TransformDisplay.h"
 
 
 using namespace p3d;
@@ -134,7 +135,7 @@ protected:
         }
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LINE_SMOOTH);
-        glLineWidth(.74f);
+        glLineWidth(.75f);
 
         program = new QOpenGLShaderProgram(this);
         program->addShaderFromSourceCode(QOpenGLShader::Vertex, R"(
@@ -182,8 +183,9 @@ public:
             rot_x2(0),
             rot_y2(0){
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
-        Grid* grid = new Grid();
-        render_items.push_back(grid);
+        render_items.push_back(new Grid());
+        render_items.push_back(new TransformDisplay(Vertex3(0, 0, 1), 270, 7));
+
         mesh.load();
         setMouseTracking(true);
 //        timer.start(100);

@@ -3,6 +3,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QFile>
+#include "RenderItem.h"
 
 namespace p3d {
     struct Vertex3 {
@@ -15,12 +16,35 @@ namespace p3d {
 
         Vertex3(float xx, float yy, float zz): x(xx), y(yy), z(zz) {}
 
+        Vertex3 operator+(const Vertex3& vec) const {
+            return Vertex3(vec.x + x, vec.y + y, vec.z + z);
+        }
+
+        Vertex3 operator-(const Vertex3& vec) const {
+            return *this + (-vec);
+        }
+
+        Vertex3 operator-() const {
+            return Vertex3(-x, -y, -z);
+        }
+
         void set(float xx, float yy, float zz) {
             x = xx;
             y = yy;
             z = zz;
         }
+
+        Vertex3 norm(){
+            float d = sqrtf(x*x + y*y + z*z);
+            if (d == 0){
+                return *this;
+            }
+            return Vertex3(x/d, y/d, z/d);
+        }
     };
+
+    Vertex3 operator*(float f, const Vertex3& vec);
+    float dot(const Vertex3& vec1, const Vertex3& vec2);
 
     struct TexCoords {
         union {
@@ -64,6 +88,13 @@ namespace p3d {
         Vertex3 normal;
     };
 
+    struct ColoredPoint {
+        ColoredPoint(const Vertex3& v, const Color& c=Color(0,0,0)) :
+                vertex(v),
+                color(c) {}
+        Vertex3 vertex;
+        Color color;
+    };
 
     class Mesh : RenderItem, private QOpenGLFunctions {
     private:

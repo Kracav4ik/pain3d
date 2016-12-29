@@ -14,10 +14,59 @@
 
 using namespace p3d;
 
+
+class Camera{
+private:
+    float rot_x;
+    float rot_y;
+    float pos_x;
+    float pos_y;
+    float scale;
+public:
+    Camera()
+            :rot_x(0)
+            ,rot_y(0)
+            ,pos_x(0)
+            ,pos_y(0)
+            ,scale(0.3)
+            {}
+    void zoom_in(){
+        scale *= 1.2;
+    }
+
+    void zoom_out(){
+        scale /= 1.2;
+    }
+
+    QMatrix4x4 get_matrix() const {
+        QMatrix4x4 res;
+        res.translate(pos_x, pos_y);
+        res.rotate(rot_x, 0, 1, 0);
+        res.rotate(rot_y, 1, 0, 0);
+        res.scale(scale);
+        return res;
+    }
+
+    void rotate(float angle_x, float angle_y){
+        rot_x += angle_x;
+        rot_y += angle_y;
+    }
+
+    void move_x(float dist){
+        pos_x += dist;
+    }
+
+    void move_y(float dist){
+        pos_y += dist;
+    }
+};
+
+
 class GLOutput : public QOpenGLWidget, private QOpenGLFunctions {
 Q_OBJECT
 private:
     QTimer timer;
+    Camera cam;
     std::vector<RenderItem*> render_items;
     QOpenGLShaderProgram* program;
     GLuint pos_attr;
@@ -25,9 +74,6 @@ private:
     QMatrix4x4 mvp2;
     GLuint uv_attr;
     GLuint texture;
-    float scale;
-    float rot_x;
-    float rot_y;
     float rot_x2;
     float rot_y2;
     int rot_i;
@@ -39,9 +85,9 @@ private:
 protected:
     virtual void wheelEvent(QWheelEvent* event) override {
         if (event->angleDelta().y() > 0) {
-            scale *= 1.2;
+            cam.zoom_in();
         } else {
-            scale /= 1.2;
+            cam.zoom_out();
         }
         refresh_mvp();
     }
@@ -55,8 +101,7 @@ protected:
 
         if (event->buttons() & Qt::LeftButton) {
             QPoint delta = pos - point;
-            rot_x += .5 * delta.x();
-            rot_y += .5 * delta.y();
+            cam.rotate(.5f * delta.x(), .5f * delta.y());
             refresh_mvp();
         } else if (event->buttons() & Qt::RightButton) {
             QPoint delta2 = pos - point;
@@ -67,12 +112,29 @@ protected:
         pos = point;
     }
 
+    void keyPressEvent(QKeyEvent *event) override {
+        printf("%s\n", event->text().toUtf8().data());
+        switch(event->key()){
+            case Qt::Key_W:
+                cam.move_y(.5f);
+                break;
+            case Qt::Key_S:
+                cam.move_y(-.5f);
+                break;
+            case Qt::Key_A:
+                cam.move_x(-.5f);
+                break;
+            case Qt::Key_D:
+                cam.move_x(.5f);
+                break;
+            default:break;
+        }
+        refresh_mvp();
+    }
+
     void refresh_mvp() {
-        mvp.setToIdentity();
-        mvp.scale(scale);
+        mvp = cam.get_matrix();
         mvp.rotate(rot_i, 1, 1, 1);
-        mvp.rotate(rot_x, 0, 1, 0);
-        mvp.rotate(rot_y, 1, 0, 0);
 
         mvp2 = mvp;
         mvp2.rotate(rot_x2, 0, 1, 0);
@@ -177,12 +239,10 @@ void main(){
 public:
     GLOutput(QWidget* parent) :
             QOpenGLWidget(parent),
-            scale(0.3),
-            rot_x(0),
-            rot_y(0),
             rot_x2(0),
             rot_y2(0){
         QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
+        setFocusPolicy(Qt::ClickFocus);
         render_items.push_back(new Grid());
         render_items.push_back(new TransformDisplay(Vertex3(0, 0, 1), 270, 7));
 

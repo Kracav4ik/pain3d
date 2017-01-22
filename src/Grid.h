@@ -19,13 +19,13 @@ private:
 
     void generate_points(unsigned int squares_count) {
         for (int i = 0; i <= squares_count; ++i) {
-            color_points.push_back(ColoredPoint(Vertex3(10 - i, -10, 0), Color(1, 1, 1)));
-            color_points.push_back(ColoredPoint(Vertex3(10 - i, 10, 0), Color(1, 0, 1)));
-            color_points.push_back(ColoredPoint(Vertex3(-10, 10 - i, 0), Color(1, 1, 0)));
-            color_points.push_back(ColoredPoint(Vertex3(10, 10 - i, 0), Color(1, 0, 0)));
+            color_points.push_back(ColoredPoint(Vector3(10 - i, -10, 0), Color(1, 1, 1)));
+            color_points.push_back(ColoredPoint(Vector3(10 - i, 10, 0), Color(1, 0, 1)));
+            color_points.push_back(ColoredPoint(Vector3(-10, 10 - i, 0), Color(1, 1, 0)));
+            color_points.push_back(ColoredPoint(Vector3(10, 10 - i, 0), Color(1, 0, 0)));
         }
-        color_points.push_back(ColoredPoint(Vertex3(0, 0, 15), Color(0, 0, 1)));
-        color_points.push_back(ColoredPoint(Vertex3(0, 0, -5), Color(0, 1, 0)));
+        color_points.push_back(ColoredPoint(Vector3(0, 0, 15), Color(0, 0, 1)));
+        color_points.push_back(ColoredPoint(Vector3(0, 0, -5), Color(0, 1, 0)));
     }
 
 public:

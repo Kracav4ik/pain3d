@@ -32,7 +32,11 @@ set(EXE_SOURCES
         src/Cube.h
         src/Mesh.h
         src/Mesh.cpp
-        src/TransformDisplay.h)
+        src/TransformDisplay.h
+        src/Arrows.cpp
+        src/Arrows.h
+        src/TransformDisplay.cpp
+)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 
